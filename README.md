@@ -1,0 +1,45 @@
+# Gestor de Incidencias
+
+API REST desarrollada en Spring Boot para gestionar incidencias de un sistema.
+
+## Tecnologías
+- Java 17
+- Spring Boot 3.5.13
+- Spring Data JPA
+- H2 Database (en memoria)
+- Maven
+
+## Estructura del proyecto
+- **model** → Entidad Incidencia con enums de estado y prioridad
+- **repository** → Acceso a datos con Spring Data JPA
+- **service** → Lógica de negocio
+- **controller** → Endpoints REST
+
+## Endpoints
+| Método | URL | Descripción |
+|--------|-----|-------------|
+| POST | /incidencias | Crear incidencia |
+| GET | /incidencias | Listar todas / filtrar |
+| GET | /incidencias/{id} | Obtener por id |
+| PUT | /incidencias/{id} | Actualizar |
+| DELETE | /incidencias/{id} | Eliminar |
+
+## Filtros disponibles
+- Por estado: `GET /incidencias?estado=ABIERTO`
+- Por prioridad: `GET /incidencias?prioridad=ALTA`
+- Por ambos: `GET /incidencias?estado=ABIERTO&prioridad=ALTA`
+
+## Valores posibles
+**Estado:** `ABIERTO`, `EN_PROGRESO`, `CERRADO`
+
+**Prioridad:** `BAJA`, `MEDIA`, `ALTA`
+
+## Ejemplo de creación
+```json
+{
+    "titulo": "Error en login",
+    "descripcion": "No deja acceder a la aplicación",
+    "estado": "ABIERTO",
+    "prioridad": "ALTA"
+}
+```
