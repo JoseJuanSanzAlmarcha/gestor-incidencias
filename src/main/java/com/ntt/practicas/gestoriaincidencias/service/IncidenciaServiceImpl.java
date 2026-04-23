@@ -25,10 +25,19 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         return repository.save(incidencia);
     }
 
-    // Devuelve todas las incidencias de la base de datos
+    /* Devuelve incidencias filtradas según los parámetros recibidos.
+     Si ambos son null, devuelve todas. Si uno o los dos tienen valor, filtra.*/
     @Override
-    public List<Incidencia> obtenerTodas() {
-        return repository.findAll();
+    public List<Incidencia> listar(EstadoIncidencia estado, PrioridadIncidencia prioridad) {
+        if (estado != null && prioridad != null) {
+            return repository.findByEstadoAndPrioridad(estado, prioridad);
+        } else if (estado != null) {
+            return repository.findByEstado(estado);
+        } else if (prioridad != null) {
+            return repository.findByPrioridad(prioridad);
+        } else {
+            return repository.findAll();
+        }
     }
 
     // Busca una incidencia por id, si no existe lanza una excepción con mensaje
@@ -54,27 +63,5 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     public void eliminar(Long id) {
         obtenerPorId(id);
         repository.deleteById(id);
-    }
-
-    // Decide qué query usar según los parámetros que lleguen
-    // valueOf() convierte el texto ("ABIERTO") al valor del enum correspondiente
-    @Override
-    public List<Incidencia> filtrar(String estado, String prioridad) {
-        if (estado != null && prioridad != null) {
-            // Ambos informados → filtra por los dos
-            return repository.findByEstadoAndPrioridad(
-                    EstadoIncidencia.valueOf(estado),
-                    PrioridadIncidencia.valueOf(prioridad)
-            );
-        } else if (estado != null) {
-            // Solo estado → filtra solo por estado
-            return repository.findByEstado(EstadoIncidencia.valueOf(estado));
-        } else if (prioridad != null) {
-            // Solo prioridad → filtra solo por prioridad
-            return repository.findByPrioridad(PrioridadIncidencia.valueOf(prioridad));
-        } else {
-            // Ninguno informado → devuelve todas
-            return repository.findAll();
-        }
     }
 }
