@@ -17,15 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-// No arranca Spring, solo usa Mockito para simular el repository
 @ExtendWith(MockitoExtension.class)
 class IncidenciaServiceTest {
 
-    // Crea un repository falso, no toca la base de datos real
     @Mock
     private IncidenciaRepository repository;
 
-    // Inyecta el mock en el service para probarlo aislado
     @InjectMocks
     private IncidenciaServiceImpl service;
 
@@ -36,7 +33,6 @@ class IncidenciaServiceTest {
         incidencia.setEstado(EstadoIncidencia.ABIERTO);
         incidencia.setPrioridad(PrioridadIncidencia.ALTA);
 
-        // Le decimos al mock qué devolver cuando se llame a save()
         when(repository.save(incidencia)).thenReturn(incidencia);
 
         Incidencia resultado = service.crear(incidencia);
@@ -47,10 +43,8 @@ class IncidenciaServiceTest {
 
     @Test
     void deberiaLanzarExcepcionSiNoExisteId() {
-        // El mock devuelve vacío cuando busca por id
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
-        // Verificamos que lanza excepción con ese id
         assertThatThrownBy(() -> service.obtenerPorId(99L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("99");
