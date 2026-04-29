@@ -1,5 +1,6 @@
 package com.ntt.practicas.gestoriaincidencias.service;
 
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
 import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
@@ -17,40 +18,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-// No arranca Spring, solo usa Mockito para simular el repository
 @ExtendWith(MockitoExtension.class)
 class IncidenciaServiceTest {
 
-    // Crea un repository falso, no toca la base de datos real
     @Mock
     private IncidenciaRepository repository;
 
-    // Inyecta el mock en el service para probarlo aislado
     @InjectMocks
     private IncidenciaServiceImpl service;
 
     @Test
     void deberiaCrearIncidencia() {
+        IncidenciaDTO dto = new IncidenciaDTO();
+        dto.setTitulo("Test");
+        dto.setEstado(EstadoIncidencia.ABIERTO);
+        dto.setPrioridad(PrioridadIncidencia.ALTA);
+
         Incidencia incidencia = new Incidencia();
         incidencia.setTitulo("Test");
         incidencia.setEstado(EstadoIncidencia.ABIERTO);
         incidencia.setPrioridad(PrioridadIncidencia.ALTA);
 
-        // Le decimos al mock qué devolver cuando se llame a save()
-        when(repository.save(incidencia)).thenReturn(incidencia);
+        when(repository.save(any(Incidencia.class))).thenReturn(incidencia);
 
-        Incidencia resultado = service.crear(incidencia);
+        IncidenciaDTO resultado = service.crear(dto);
 
         assertThat(resultado.getTitulo()).isEqualTo("Test");
-        verify(repository, times(1)).save(incidencia);
+        verify(repository, times(1)).save(any(Incidencia.class));
     }
 
     @Test
     void deberiaLanzarExcepcionSiNoExisteId() {
-        // El mock devuelve vacío cuando busca por id
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
-        // Verificamos que lanza excepción con ese id
         assertThatThrownBy(() -> service.obtenerPorId(99L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("99");
@@ -63,7 +63,7 @@ class IncidenciaServiceTest {
 
         when(repository.findAll()).thenReturn(List.of(incidencia));
 
-        List<Incidencia> resultado = service.listar(null, null);
+        List<IncidenciaDTO> resultado = service.listar(null, null);
 
         assertThat(resultado).hasSize(1);
         verify(repository, times(1)).findAll();

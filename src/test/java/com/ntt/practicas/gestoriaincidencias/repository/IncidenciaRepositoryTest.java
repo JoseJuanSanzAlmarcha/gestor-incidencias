@@ -11,8 +11,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// @DataJpaTest levanta solo la capa de base de datos con H2
-// No arranca el servidor completo, solo lo necesario para JPA
 @DataJpaTest
 class IncidenciaRepositoryTest {
 
@@ -21,17 +19,14 @@ class IncidenciaRepositoryTest {
 
     @Test
     void deberiaGuardarYRecuperarIncidencia() {
-        // Creamos una incidencia de prueba
         Incidencia incidencia = new Incidencia();
         incidencia.setTitulo("Test");
         incidencia.setDescripcion("Descripción de prueba");
         incidencia.setEstado(EstadoIncidencia.ABIERTO);
         incidencia.setPrioridad(PrioridadIncidencia.ALTA);
 
-        // La guardamos en H2
         repository.save(incidencia);
 
-        // Comprobamos que se guardó correctamente
         List<Incidencia> resultado = repository.findAll();
         assertThat(resultado).hasSize(1);
         assertThat(resultado.get(0).getTitulo()).isEqualTo("Test");
