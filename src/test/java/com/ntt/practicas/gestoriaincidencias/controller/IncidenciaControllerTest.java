@@ -1,8 +1,8 @@
 package com.ntt.practicas.gestoriaincidencias.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
-import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
 import com.ntt.practicas.gestoriaincidencias.service.IncidenciaService;
 import org.junit.jupiter.api.Test;
@@ -33,26 +33,26 @@ class IncidenciaControllerTest {
 
     @Test
     void deberiaCrearIncidencia() throws Exception {
-        Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Test");
-        incidencia.setEstado(EstadoIncidencia.ABIERTO);
-        incidencia.setPrioridad(PrioridadIncidencia.ALTA);
+        IncidenciaDTO dto = new IncidenciaDTO();
+        dto.setTitulo("Test");
+        dto.setEstado(EstadoIncidencia.ABIERTO);
+        dto.setPrioridad(PrioridadIncidencia.ALTA);
 
-        when(incidenciaService.crear(any())).thenReturn(incidencia);
+        when(incidenciaService.crear(any())).thenReturn(dto);
 
         mockMvc.perform(post("/incidencias")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(incidencia)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.titulo").value("Test"));
     }
 
     @Test
     void deberiaListarIncidencias() throws Exception {
-        Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Lista");
+        IncidenciaDTO dto = new IncidenciaDTO();
+        dto.setTitulo("Lista");
 
-        when(incidenciaService.listar(null, null)).thenReturn(List.of(incidencia));
+        when(incidenciaService.listar(null, null)).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/incidencias"))
                 .andExpect(status().isOk())
@@ -61,10 +61,10 @@ class IncidenciaControllerTest {
 
     @Test
     void deberiaObtenerIncidenciaPorId() throws Exception {
-        Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Por id");
+        IncidenciaDTO dto = new IncidenciaDTO();
+        dto.setTitulo("Por id");
 
-        when(incidenciaService.obtenerPorId(1L)).thenReturn(incidencia);
+        when(incidenciaService.obtenerPorId(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/incidencias/1"))
                 .andExpect(status().isOk())
