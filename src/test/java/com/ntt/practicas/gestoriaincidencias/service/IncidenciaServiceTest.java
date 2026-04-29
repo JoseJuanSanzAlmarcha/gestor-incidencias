@@ -1,5 +1,6 @@
 package com.ntt.practicas.gestoriaincidencias.service;
 
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
 import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
@@ -28,17 +29,22 @@ class IncidenciaServiceTest {
 
     @Test
     void deberiaCrearIncidencia() {
+        IncidenciaDTO dto = new IncidenciaDTO();
+        dto.setTitulo("Test");
+        dto.setEstado(EstadoIncidencia.ABIERTO);
+        dto.setPrioridad(PrioridadIncidencia.ALTA);
+
         Incidencia incidencia = new Incidencia();
         incidencia.setTitulo("Test");
         incidencia.setEstado(EstadoIncidencia.ABIERTO);
         incidencia.setPrioridad(PrioridadIncidencia.ALTA);
 
-        when(repository.save(incidencia)).thenReturn(incidencia);
+        when(repository.save(any(Incidencia.class))).thenReturn(incidencia);
 
-        Incidencia resultado = service.crear(incidencia);
+        IncidenciaDTO resultado = service.crear(dto);
 
         assertThat(resultado.getTitulo()).isEqualTo("Test");
-        verify(repository, times(1)).save(incidencia);
+        verify(repository, times(1)).save(any(Incidencia.class));
     }
 
     @Test
@@ -57,7 +63,7 @@ class IncidenciaServiceTest {
 
         when(repository.findAll()).thenReturn(List.of(incidencia));
 
-        List<Incidencia> resultado = service.listar(null, null);
+        List<IncidenciaDTO> resultado = service.listar(null, null);
 
         assertThat(resultado).hasSize(1);
         verify(repository, times(1)).findAll();

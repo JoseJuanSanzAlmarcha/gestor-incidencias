@@ -1,67 +1,83 @@
 package com.ntt.practicas.gestoriaincidencias.service;
 
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
 import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
 import com.ntt.practicas.gestoriaincidencias.repository.IncidenciaRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.stream.Collectors;
 
-// Le dice a Spring que esta clase es un Service y la gestiona automáticamente
 @Service
 public class IncidenciaServiceImpl implements IncidenciaService {
 
-    // El repository es el que habla con la base de datos
     private final IncidenciaRepository repository;
 
-    // Spring inyecta automáticamente el repository aquí, no hace falta hacer new
     public IncidenciaServiceImpl(IncidenciaRepository repository) {
         this.repository = repository;
     }
 
-    // Guarda la incidencia en la base de datos y la devuelve con su id asignado
-    @Override
-    public Incidencia crear(Incidencia incidencia) {
-        return repository.save(incidencia);
+    private IncidenciaDTO toDTO(Incidencia incidencia) {
+        IncidenciaDTO dto = new IncidenciaDTO();
+        dto.setId(incidencia.getId());
+        dto.setTitulo(incidencia.getTitulo());
+        dto.setDescripcion(incidencia.getDescripcion());
+        dto.setEstado(incidencia.getEstado());
+        dto.setPrioridad(incidencia.getPrioridad());
+        return dto;
     }
 
-    /* Devuelve incidencias filtradas según los parámetros recibidos.
-     Si ambos son null, devuelve todas. Si uno o los dos tienen valor, filtra.*/
+    private Incidencia toEntity(IncidenciaDTO dto) {
+        Incidencia incidencia = new Incidencia();
+        incidencia.setTitulo(dto.getTitulo());
+        incidencia.setDescripcion(dto.getDescripcion());
+        incidencia.setEstado(dto.getEstado());
+        incidencia.setPrioridad(dto.getPrioridad());
+        return incidencia;
+    }
+
     @Override
-    public List<Incidencia> listar(EstadoIncidencia estado, PrioridadIncidencia prioridad) {
+    public IncidenciaDTO crear(IncidenciaDTO dto) {
+        return toDTO(repository.save(toEntity(dto)));
+    }
+
+    @Override
+    public List<IncidenciaDTO> listar(EstadoIncidencia estado, PrioridadIncidencia prioridad) {
+        List<Incidencia> incidencias;
         if (estado != null && prioridad != null) {
-            return repository.findByEstadoAndPrioridad(estado, prioridad);
+            incidencias = repository.findByEstadoAndPrioridad(estado, prioridad);
         } else if (estado != null) {
-            return repository.findByEstado(estado);
+            incidencias = repository.findByEstado(estado);
         } else if (prioridad != null) {
-            return repository.findByPrioridad(prioridad);
+            incidencias = repository.findByPrioridad(prioridad);
         } else {
-            return repository.findAll();
+            incidencias = repository.findAll();
         }
+        return incidencias.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    // Busca una incidencia por id, si no existe lanza una excepción con mensaje
     @Override
-    public Incidencia obtenerPorId(Long id) {
-        return repository.findById(id)
+    public IncidenciaDTO obtenerPorId(Long id) {
+        return toDTO(repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Incidencia no encontrada con id: " + id)));
+    }
+
+    @Override
+    public IncidenciaDTO actualizar(Long id, IncidenciaDTO dto) {
+        Incidencia existente = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Incidencia no encontrada con id: " + id));
+        existente.setTitulo(dto.getTitulo());
+        existente.setDescripcion(dto.getDescripcion());
+        existente.setEstado(dto.getEstado());
+        existente.setPrioridad(dto.getPrioridad());
+        return toDTO(repository.save(existente));
     }
 
-    // Primero comprueba que existe, luego actualiza los campos y guarda de nuevo
-    @Override
-    public Incidencia actualizar(Long id, Incidencia incidencia) {
-        Incidencia existente = obtenerPorId(id);
-        existente.setTitulo(incidencia.getTitulo());
-        existente.setDescripcion(incidencia.getDescripcion());
-        existente.setEstado(incidencia.getEstado());
-        existente.setPrioridad(incidencia.getPrioridad());
-        return repository.save(existente);
-    }
-
-    // Comprueba que existe y luego la elimina
     @Override
     public void eliminar(Long id) {
-        obtenerPorId(id);
+        repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Incidencia no encontrada con id: " + id));
         repository.deleteById(id);
     }
 }
