@@ -3,10 +3,8 @@ package com.ntt.practicas.gestoriaincidencias.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
-import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
-import com.ntt.practicas.gestoriaincidencias.repository.IncidenciaRepository;
-import com.ntt.practicas.gestoriaincidencias.service.IncidenciaServiceImpl;
+import com.ntt.practicas.gestoriaincidencias.service.IncidenciaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -15,9 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -32,24 +30,13 @@ class IncidenciaControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private IncidenciaRepository repository;
-
-    @MockitoBean
-    private IncidenciaServiceImpl incidenciaService;
+    private IncidenciaService incidenciaService;
 
     @Test
     void deberiaCrearIncidencia() throws Exception {
-        IncidenciaDTO dto = new IncidenciaDTO();
-        dto.setTitulo("Test");
-        dto.setEstado(EstadoIncidencia.ABIERTO);
-        dto.setPrioridad(PrioridadIncidencia.ALTA);
+        IncidenciaDTO dto = new IncidenciaDTO(null, "Test", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.ALTA);
 
-        Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Test");
-        incidencia.setEstado(EstadoIncidencia.ABIERTO);
-        incidencia.setPrioridad(PrioridadIncidencia.ALTA);
-
-        when(repository.save(any(Incidencia.class))).thenReturn(incidencia);
+        when(incidenciaService.crear(any(IncidenciaDTO.class))).thenReturn(dto);
 
         mockMvc.perform(post("/incidencias")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,10 +46,9 @@ class IncidenciaControllerTest {
 
     @Test
     void deberiaListarIncidencias() throws Exception {
-        Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Lista");
+        IncidenciaDTO dto = new IncidenciaDTO(1L, "Lista", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.BAJA);
 
-        when(repository.findAll()).thenReturn(List.of(incidencia));
+        when(incidenciaService.listar()).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/incidencias"))
                 .andExpect(status().isOk());
@@ -70,10 +56,9 @@ class IncidenciaControllerTest {
 
     @Test
     void deberiaObtenerIncidenciaPorId() throws Exception {
-        Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Por id");
+        IncidenciaDTO dto = new IncidenciaDTO(1L, "Por id", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.BAJA);
 
-        when(repository.findById(1L)).thenReturn(Optional.of(incidencia));
+        when(incidenciaService.obtenerPorId(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/incidencias/1"))
                 .andExpect(status().isOk());
@@ -81,8 +66,7 @@ class IncidenciaControllerTest {
 
     @Test
     void deberiaEliminarIncidencia() throws Exception {
-        Incidencia incidencia = new Incidencia();
-        when(repository.findById(1L)).thenReturn(Optional.of(incidencia));
+        doNothing().when(incidenciaService).eliminar(1L);
 
         mockMvc.perform(delete("/incidencias/1"))
                 .andExpect(status().isNoContent());

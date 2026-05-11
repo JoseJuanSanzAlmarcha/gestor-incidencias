@@ -1,8 +1,6 @@
 package com.ntt.practicas.gestoriaincidencias.controller;
 
 import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
-import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
-import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
 import com.ntt.practicas.gestoriaincidencias.service.IncidenciaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,10 +24,8 @@ public class IncidenciaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncidenciaDTO>> listar(
-            @RequestParam(required = false) EstadoIncidencia estado,
-            @RequestParam(required = false) PrioridadIncidencia prioridad) {
-        return ResponseEntity.ok(incidenciaService.listar(estado, prioridad));
+    public ResponseEntity<List<IncidenciaDTO>> listar() {
+        return ResponseEntity.ok(incidenciaService.listar());
     }
 
     @GetMapping("/{id}")
