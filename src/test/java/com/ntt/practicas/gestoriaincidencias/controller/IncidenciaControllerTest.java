@@ -1,99 +1,96 @@
 package com.ntt.practicas.gestoriaincidencias.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
+import com.ntt.practicas.gestoriaincidencias.mapper.IncidenciaMapper;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
 import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
-import com.ntt.practicas.gestoriaincidencias.service.IncidenciaService;
+import com.ntt.practicas.gestoriaincidencias.repository.IncidenciaRepository;
+import com.ntt.practicas.gestoriaincidencias.service.IncidenciaServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Solo levanta la capa web (Controller), sin base de datos ni service real
-// Es más rápido que arrancar toda la aplicación
-@WebMvcTest(IncidenciaController.class)
+@ExtendWith(MockitoExtension.class)
 class IncidenciaControllerTest {
 
-    // MockMvc simula peticiones HTTP como si fuera Postman, pero dentro del test
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private IncidenciaRepository incidenciaRepository;
 
-    // ObjectMapper convierte objetos Java a JSON y viceversa
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Mock
+    private IncidenciaMapper incidenciaMapper;
 
-    // Crea un service falso (mock) para no depender de la base de datos
-    // El test controla qué devuelve el service en cada momento
-    @MockitoBean
-    private IncidenciaService incidenciaService;
+    private IncidenciaServiceImpl incidenciaService;
+
+    private IncidenciaController incidenciaController;
+
+    @BeforeEach
+    void setUp() {
+        incidenciaService = new IncidenciaServiceImpl(incidenciaRepository, incidenciaMapper);
+        incidenciaController = new IncidenciaController(incidenciaService);
+    }
 
     @Test
-    void deberiaCrearIncidencia() throws Exception {
-        // Creamos una incidencia de prueba
+    void deberiaCrearIncidencia() {
+        IncidenciaDTO dto = new IncidenciaDTO(null, "Test", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.ALTA);
         Incidencia incidencia = new Incidencia();
         incidencia.setTitulo("Test");
-        incidencia.setEstado(EstadoIncidencia.ABIERTO);
-        incidencia.setPrioridad(PrioridadIncidencia.ALTA);
 
-        // Le decimos al service falso: cuando alguien llame a crear(), devuelve esta incidencia
-        when(incidenciaService.crear(any())).thenReturn(incidencia);
+        when(incidenciaMapper.toEntity(dto)).thenReturn(incidencia);
+        when(incidenciaRepository.save(any(Incidencia.class))).thenReturn(incidencia);
+        when(incidenciaMapper.toDTO(incidencia)).thenReturn(dto);
 
-        // Simulamos un POST a /incidencias con la incidencia en el body
-        // Comprobamos que devuelve 201 (CREATED) y que el título es "Test"
-        mockMvc.perform(post("/incidencias")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(incidencia)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.titulo").value("Test"));
+        var response = incidenciaController.crear(dto);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isEqualTo(dto);
     }
 
     @Test
-    void deberiaListarIncidencias() throws Exception {
-        // Creamos una incidencia de prueba
+    void deberiaListarIncidencias() {
         Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Lista");
+        IncidenciaDTO dto = new IncidenciaDTO(1L, "Lista", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.BAJA);
 
-        // Cuando se llame a listar() sin filtros, devuelve una lista con esa incidencia
-        when(incidenciaService.listar(null, null)).thenReturn(List.of(incidencia));
+        when(incidenciaRepository.findAll()).thenReturn(List.of(incidencia));
+        when(incidenciaMapper.toDTO(incidencia)).thenReturn(dto);
 
-        // Simulamos un GET a /incidencias
-        // Comprobamos que devuelve 200 (OK) y que el primer elemento tiene título "Lista"
-        mockMvc.perform(get("/incidencias"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].titulo").value("Lista"));
+        var response = incidenciaController.listar();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).hasSize(1);
     }
 
     @Test
-    void deberiaObtenerIncidenciaPorId() throws Exception {
-        // Creamos una incidencia de prueba
+    void deberiaObtenerIncidenciaPorId() {
         Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("Por id");
+        IncidenciaDTO dto = new IncidenciaDTO(1L, "Por id", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.BAJA);
 
-        // Cuando se llame a obtenerPorId(1), devuelve esa incidencia
-        when(incidenciaService.obtenerPorId(1L)).thenReturn(incidencia);
+        when(incidenciaRepository.findById(1L)).thenReturn(Optional.of(incidencia));
+        when(incidenciaMapper.toDTO(incidencia)).thenReturn(dto);
 
-        // Simulamos un GET a /incidencias/1
-        // Comprobamos que devuelve 200 (OK) y que el título es "Por id"
-        mockMvc.perform(get("/incidencias/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.titulo").value("Por id"));
+        var response = incidenciaController.obtenerPorId(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(dto);
     }
 
     @Test
-    void deberiaEliminarIncidencia() throws Exception {
-        // Simulamos un DELETE a /incidencias/1
-        // Comprobamos que devuelve 204 (NO CONTENT) — eliminado correctamente
-        mockMvc.perform(delete("/incidencias/1"))
-                .andExpect(status().isNoContent());
+    void deberiaEliminarIncidencia() {
+        Incidencia incidencia = new Incidencia();
+        when(incidenciaRepository.findById(1L)).thenReturn(Optional.of(incidencia));
+
+        var response = incidenciaController.eliminar(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 }

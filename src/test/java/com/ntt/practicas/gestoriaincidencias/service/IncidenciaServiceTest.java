@@ -1,5 +1,7 @@
 package com.ntt.practicas.gestoriaincidencias.service;
 
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
+import com.ntt.practicas.gestoriaincidencias.mapper.IncidenciaMapper;
 import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
 import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
 import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
@@ -17,53 +19,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-// No arranca Spring, solo usa Mockito para simular el repository
 @ExtendWith(MockitoExtension.class)
 class IncidenciaServiceTest {
 
-    // Crea un repository falso, no toca la base de datos real
     @Mock
     private IncidenciaRepository repository;
 
-    // Inyecta el mock en el service para probarlo aislado
+    @Mock
+    private IncidenciaMapper mapper;
+
     @InjectMocks
     private IncidenciaServiceImpl service;
 
     @Test
     void deberiaCrearIncidencia() {
+        IncidenciaDTO dto = new IncidenciaDTO(null, "Test", null, EstadoIncidencia.ABIERTO, PrioridadIncidencia.ALTA);
         Incidencia incidencia = new Incidencia();
         incidencia.setTitulo("Test");
-        incidencia.setEstado(EstadoIncidencia.ABIERTO);
-        incidencia.setPrioridad(PrioridadIncidencia.ALTA);
 
-        // Le decimos al mock qué devolver cuando se llame a save()
+        when(mapper.toEntity(dto)).thenReturn(incidencia);
         when(repository.save(incidencia)).thenReturn(incidencia);
+        when(mapper.toDTO(incidencia)).thenReturn(dto);
 
-        Incidencia resultado = service.crear(incidencia);
+        IncidenciaDTO resultado = service.crear(dto);
 
-        assertThat(resultado.getTitulo()).isEqualTo("Test");
+        assertThat(resultado.titulo()).isEqualTo("Test");
         verify(repository, times(1)).save(incidencia);
     }
 
     @Test
     void deberiaLanzarExcepcionSiNoExisteId() {
-        // El mock devuelve vacío cuando busca por id
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
-        // Verificamos que lanza excepción con ese id
         assertThatThrownBy(() -> service.obtenerPorId(99L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("99");
     }
 
     @Test
-    void deberiaListarTodasSiNoHayFiltros() {
+    void deberiaListarTodas() {
         Incidencia incidencia = new Incidencia();
         incidencia.setTitulo("Sin filtro");
+        IncidenciaDTO dto = new IncidenciaDTO(null, "Sin filtro", null, null, null);
 
         when(repository.findAll()).thenReturn(List.of(incidencia));
+        when(mapper.toDTO(incidencia)).thenReturn(dto);
 
-        List<Incidencia> resultado = service.listar(null, null);
+        List<IncidenciaDTO> resultado = service.listar();
 
         assertThat(resultado).hasSize(1);
         verify(repository, times(1)).findAll();
@@ -72,8 +74,6 @@ class IncidenciaServiceTest {
     @Test
     void deberiaEliminarIncidencia() {
         Incidencia incidencia = new Incidencia();
-        incidencia.setTitulo("A eliminar");
-
         when(repository.findById(1L)).thenReturn(Optional.of(incidencia));
 
         service.eliminar(1L);

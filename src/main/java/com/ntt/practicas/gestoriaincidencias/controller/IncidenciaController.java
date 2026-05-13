@@ -1,8 +1,6 @@
 package com.ntt.practicas.gestoriaincidencias.controller;
 
-import com.ntt.practicas.gestoriaincidencias.model.EstadoIncidencia;
-import com.ntt.practicas.gestoriaincidencias.model.Incidencia;
-import com.ntt.practicas.gestoriaincidencias.model.PrioridadIncidencia;
+import com.ntt.practicas.gestoriaincidencias.dto.IncidenciaDTO;
 import com.ntt.practicas.gestoriaincidencias.service.IncidenciaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,25 +19,23 @@ public class IncidenciaController {
     }
 
     @PostMapping
-    public ResponseEntity<Incidencia> crear(@RequestBody Incidencia incidencia) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(incidenciaService.crear(incidencia));
+    public ResponseEntity<IncidenciaDTO> crear(@RequestBody IncidenciaDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(incidenciaService.crear(dto));
     }
 
     @GetMapping
-    public ResponseEntity<List<Incidencia>> listar(
-            @RequestParam(required = false) EstadoIncidencia estado,
-            @RequestParam(required = false) PrioridadIncidencia prioridad) {
-        return ResponseEntity.ok(incidenciaService.listar(estado, prioridad));
+    public ResponseEntity<List<IncidenciaDTO>> listar() {
+        return ResponseEntity.ok(incidenciaService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Incidencia> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<IncidenciaDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(incidenciaService.obtenerPorId(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Incidencia> actualizar(@PathVariable Long id, @RequestBody Incidencia incidencia) {
-        return ResponseEntity.ok(incidenciaService.actualizar(id, incidencia));
+    public ResponseEntity<IncidenciaDTO> actualizar(@PathVariable Long id, @RequestBody IncidenciaDTO dto) {
+        return ResponseEntity.ok(incidenciaService.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
